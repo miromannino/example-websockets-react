@@ -8,7 +8,14 @@ enum ActionTypes {
   DISCONNECT_SENSOR = "sensors/disconnectSensor",
 }
 
+interface SensorAction extends Action {
+  type: ActionTypes;
+  payload?: SensorID | null;
+}
+
 // Define the middleware representing the sensor listener
+// https://stackoverflow.com/questions/45339448/how-do-you-create-strongly-typed-redux-middleware-in-typescript-from-reduxs-typ
+// By reading the question (and others) it seems quite hard to change the Middleware type
 export const sensorsConnector: Middleware = (store) => {
   // The connection to the server
   let websocket: WebSocket | null = null;
@@ -94,11 +101,7 @@ export const sensorsConnector: Middleware = (store) => {
   };
 
   // Middleware logic
-  // https://stackoverflow.com/questions/45339448/how-do-you-create-strongly-typed-redux-middleware-in-typescript-from-reduxs-typ
-  // By reading the question (and others) I can argue it seems quite hard to change the Middleware type
-  // For now just have action type to any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (next) => (action: any) => {
+  return (next) => (action: SensorAction) => {
     switch (action.type) {
       case ActionTypes.START_SENSOR_LISTENING:
         connectWebSocket();

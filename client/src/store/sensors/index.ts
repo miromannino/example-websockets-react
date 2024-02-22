@@ -40,8 +40,3 @@ export interface SensorCommand {
   command: SensorsCommands;
   id: SensorID;
 }
-
-interface SensorAction extends Action {
-  type: ActionTypes;
-  payload?: SensorID | null;
-}
