@@ -29,6 +29,8 @@ export const { updateSensorData, setShowDisconnected } = sensorsSlice.actions;
 // --------------------------------------------------
 // Commands
 // --------------------------------------------------
+
+// These are the commands that can be sent via websocket to the sensors
 export enum SensorsCommands {
   CONNECT = "connect",
   DISCONNECT = "disconnect",
@@ -37,4 +39,9 @@ export enum SensorsCommands {
 export interface SensorCommand {
   command: SensorsCommands;
   id: SensorID;
+}
+
+interface SensorAction extends Action {
+  type: ActionTypes;
+  payload?: SensorID | null;
 }

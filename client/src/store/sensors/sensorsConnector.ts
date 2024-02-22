@@ -1,10 +1,12 @@
-import { Middleware } from "@reduxjs/toolkit";
-import { SensorID, SensorsCommands, updateSensorData } from ".";
+import { Middleware, Action } from "@reduxjs/toolkit";
+import { SensorData, SensorID, SensorsCommands, updateSensorData } from ".";
 
-// Action types
-const START_SENSOR_LISTENING = "sensors/startListening";
-const CONNECT_SENSOR = "sensors/connectSensor";
-const DISCONNECT_SENSOR = "sensors/disconnectSensor";
+// These are action types for the sensors connector
+enum ActionTypes {
+  START_SENSOR_LISTENING = "sensors/startListening",
+  CONNECT_SENSOR = "sensors/connectSensor",
+  DISCONNECT_SENSOR = "sensors/disconnectSensor",
+}
 
 // Define the middleware representing the sensor listener
 export const sensorsConnector: Middleware = (store) => {
@@ -20,28 +22,46 @@ export const sensorsConnector: Middleware = (store) => {
       return; // Already connected
     }
 
+    if (!import.meta.env.VITE_SERVER_WS_URL) {
+      throw new Error("VITE_SERVER_WS_URL is not defined");
+    }
     websocket = new WebSocket(import.meta.env.VITE_SERVER_WS_URL);
 
+    // On open
     websocket.onopen = () => {
       console.log("Connected to the server");
 
       // If there are sensors connection status to recover, we do
-      if (connectionStatusRecovery) {
+      if (Object.keys(connectionStatusRecovery).length > 0) {
         for (const sensorId in connectionStatusRecovery) {
           setSensorConnection(connectionStatusRecovery[sensorId], sensorId);
         }
         connectionStatusRecovery = {};
-      } else {
-        store.dispatch(connectAllSensors());
       }
     };
 
+    // Parse incoming sensor data and update state via dispatch
     websocket.onmessage = (event) => {
       // Parse incoming sensor data and update state via dispatch
-      const sensorData = JSON.parse(event.data);
+      let sensorData: SensorData;
+      try {
+        sensorData = JSON.parse(event.data);
+      } catch (error) {
+        console.error("Error parsing sensor data:", error);
+        return;
+      }
       store.dispatch(updateSensorData(sensorData));
     };
 
+    // Log errors and re-connect on error
+    websocket.onerror = (error) => {
+      console.error("WebSocket encountered an error:", error);
+      if (websocket) {
+        websocket.close(); // Ensure the socket is closed before attempting to reconnect
+      }
+    };
+
+    // Reconnect on close
     websocket.onclose = () => {
       console.log("Disconnected from the server");
       websocket = null;
@@ -55,12 +75,13 @@ export const sensorsConnector: Middleware = (store) => {
       // We constantly re-attempt to reconnect
       setTimeout(() => {
         connectWebSocket();
-      }, 100);
+      }, 500);
     };
   };
 
   const setSensorConnection = (activate: boolean, id: SensorID) => {
     if (websocket) {
+      console.log("Sending connect to " + id);
       websocket.send(
         JSON.stringify({
           command: activate
@@ -79,10 +100,10 @@ export const sensorsConnector: Middleware = (store) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (next) => (action: any) => {
     switch (action.type) {
-      case START_SENSOR_LISTENING:
+      case ActionTypes.START_SENSOR_LISTENING:
         connectWebSocket();
         break;
-      case CONNECT_SENSOR:
+      case ActionTypes.CONNECT_SENSOR:
         if (websocket) {
           if (!action.payload) {
             // With no payload we connect all sensors
@@ -94,7 +115,7 @@ export const sensorsConnector: Middleware = (store) => {
           }
         }
         break;
-      case DISCONNECT_SENSOR:
+      case ActionTypes.DISCONNECT_SENSOR:
         if (websocket) {
           if (!action.payload) {
             // With no payload we disconnect all sensors
@@ -116,13 +137,17 @@ export const sensorsConnector: Middleware = (store) => {
 
 // Define action creators for connecting and disconnecting sensors
 export const connectSensor = (id: SensorID) => ({
-  type: CONNECT_SENSOR,
+  type: ActionTypes.CONNECT_SENSOR,
   payload: id,
 });
 export const disconnectSensor = (id: SensorID) => ({
-  type: DISCONNECT_SENSOR,
+  type: ActionTypes.DISCONNECT_SENSOR,
   payload: id,
 });
-export const disconnectAllSensors = () => ({ type: DISCONNECT_SENSOR });
-export const connectAllSensors = () => ({ type: CONNECT_SENSOR });
-export const startSensorListening = () => ({ type: START_SENSOR_LISTENING });
+export const disconnectAllSensors = () => ({
+  type: ActionTypes.DISCONNECT_SENSOR,
+});
+export const connectAllSensors = () => ({ type: ActionTypes.CONNECT_SENSOR });
+export const startSensorListening = () => ({
+  type: ActionTypes.START_SENSOR_LISTENING,
+});
