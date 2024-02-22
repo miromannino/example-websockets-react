@@ -25,18 +25,3 @@ export interface SensorsState {
 // Export the reducer and action creators
 export const sensorsReducer = sensorsSlice.reducer;
 export const { updateSensorData, setShowDisconnected } = sensorsSlice.actions;
-
-// --------------------------------------------------
-// Commands
-// --------------------------------------------------
-
-// These are the commands that can be sent via websocket to the sensors
-export enum SensorsCommands {
-  CONNECT = "connect",
-  DISCONNECT = "disconnect",
-}
-
-export interface SensorCommand {
-  command: SensorsCommands;
-  id: SensorID;
-}

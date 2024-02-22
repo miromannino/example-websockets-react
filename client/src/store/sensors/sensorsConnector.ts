@@ -1,5 +1,15 @@
 import { Middleware, Action } from "@reduxjs/toolkit";
-import { SensorData, SensorID, SensorsCommands, updateSensorData } from ".";
+import { SensorData, SensorID, updateSensorData } from ".";
+
+// These are the commands that can be sent via websocket to the sensors
+export enum WebSocketSensorsCommands {
+  CONNECT = "connect",
+  DISCONNECT = "disconnect",
+}
+export interface SensorCommandData {
+  command: WebSocketSensorsCommands;
+  id: SensorID;
+}
 
 // These are action types for the sensors connector
 enum ActionTypes {
@@ -7,7 +17,6 @@ enum ActionTypes {
   CONNECT_SENSOR = "sensors/connectSensor",
   DISCONNECT_SENSOR = "sensors/disconnectSensor",
 }
-
 interface SensorAction extends Action {
   type: ActionTypes;
   payload?: SensorID | null;
@@ -92,8 +101,8 @@ export const sensorsConnector: Middleware = (store) => {
       websocket.send(
         JSON.stringify({
           command: activate
-            ? SensorsCommands.CONNECT
-            : SensorsCommands.DISCONNECT,
+            ? WebSocketSensorsCommands.CONNECT
+            : WebSocketSensorsCommands.DISCONNECT,
           id: id,
         })
       );
