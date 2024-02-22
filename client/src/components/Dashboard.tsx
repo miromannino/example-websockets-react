@@ -2,10 +2,11 @@ import { Container, Grid } from "@mui/material";
 import { useSelector } from "react-redux";
 import SensorDisplay from "./SensorDisplay";
 import { getVisibleSensorsIds } from "../store/sensors/selectors";
+import { shallowEqual } from 'react-redux';
 
 // This component displays the dashboard, with all the sensors
 const Dashboard = () => {
-  const displayIDs = useSelector(getVisibleSensorsIds);
+  const displayIDs = useSelector(getVisibleSensorsIds, shallowEqual);
 
   return (
     <Container data-testid="dashboard">
