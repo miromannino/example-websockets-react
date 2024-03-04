@@ -9,7 +9,7 @@ import { SensorData, SensorsState } from ".";
 const initialState: SensorsState = {
   byId: {},
   allIds: [],
-  showDisconnected: true
+  showDisconnected: true,
 };
 
 // Create a slice for the sensors data
@@ -25,12 +25,16 @@ export const sensorsSlice = createSlice({
         state.allIds.push(sensorData.id);
       }
 
-      // Update or add the sensor data in the byId object
-      state.byId[sensorData.id] = sensorData;
+      state.byId[sensorData.id] =
+        sensorData.connected || !state.byId[sensorData.id]?.value
+          ? sensorData
+          : {
+              ...sensorData,
+              value: state.byId[sensorData.id].value,
+            };
     },
     setShowDisconnected(state, action: PayloadAction<boolean>) {
       state.showDisconnected = action.payload;
-    }
+    },
   },
 });
-

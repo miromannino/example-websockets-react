@@ -47,15 +47,18 @@ wss.on("connection", function (r) {
         ? ((connectedSensors = connectedSensors.filter(function (e) {
             return e !== t.id;
           })),
-          r.send(
-            JSON.stringify(
-              generateSensor(
-                sensors.find(function (e) {
-                  return e.id === t.id;
-                })
+            wss.clients.forEach(function (e) {
+              e.send(
+                JSON.stringify(
+                  generateSensor(
+                    sensors.find(function (e) {
+                      return e.id === t.id;
+                    })
+                  )
+                )
               )
-            )
-          ))
+            })
+          )
         : t && "connect" === t.command && void 0 !== t.id
         ? connectedSensors.includes(t.id) || connectedSensors.push(t.id)
         : console.log("Unhandled message");

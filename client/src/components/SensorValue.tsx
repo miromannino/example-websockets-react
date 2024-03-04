@@ -20,7 +20,7 @@ const SensorValue: React.FC<SensorCardProps> = ({ sensorId }) => {
         data-testid={"value-" + sensorId}
         color={data.connected ? "info.main" : "text.disabled"}
       >
-        {data.value ? data.value : "N/A"}
+        {data.value}
       </Typography>
       &nbsp;
       <Typography variant="h6" display="inline">
